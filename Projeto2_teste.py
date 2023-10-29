@@ -388,7 +388,7 @@ def obtem_pedra(g, i):
     tabuleiro = [list(linha) for linha in linhas_limpas]
 
     # Converte a coordenada para números de acordo com a lista: tabuleiro
-    numero_linha = len(tabuleiro) - (int(i[1]) - 1) - 1  # Ajuste para índice zero-base
+    numero_linha = len(tabuleiro) - (int(i[1]) - 1) - 1  
     numero_coluna = ord(i[0]) - 65
 
     # Verifica se a coordenada está dentro do tabuleiro
@@ -426,11 +426,54 @@ def obtem_cadeia(g, i):
                 pilha.extend(adjacentes)
 
     return tuple(ordena_intersecoes(cadeia))
- 
-     
+
+def coloca_pedra(g, i, p):
+    # Divide o tabuleiro em linhas com uma lista
+    linhas = g.split('\n')[1:-1] 
+
+    # Remove espaços em branco e números no início e no final das linhas
+    linhas_limpas = [linha[3:-3].replace(' ', '') for linha in linhas] 
+
+    # Cria uma lista de listas a partir das linhas
+    tabuleiro = [list(linha) for linha in linhas_limpas]
+
+    # Converte a coordenada para números de acordo com a lista: tabuleiro
+    numero_linha = len(tabuleiro) - (int(i[1]) - 1) - 1  
+    numero_coluna = ord(i[0]) - 65
+
+    if eh_intersecao(i) and eh_pedra(p) and 0 <= numero_linha < len(tabuleiro) and 0 <= numero_coluna < len(tabuleiro[0]):
+        if p == 0:
+            tabuleiro[numero_linha][numero_coluna] = 'O'
+        elif p == 1:
+            tabuleiro[numero_linha][numero_coluna] = 'X'
+        else:
+            tabuleiro[numero_linha][numero_coluna] = '.'
+
+    n = len(tabuleiro)
+    ib = []
+    ip = []
+    for linha in range(n):
+        for coluna in range(n):
+            if tabuleiro[linha][coluna] == 'O':
+                ib.append((chr(65 + coluna), n - linha))
+            elif tabuleiro[linha][coluna] == 'X':
+                ip.append((chr(65 + coluna), n - linha))
+
+    return cria_goban(n, ib, ip)
+
+def remove_pedra(g, i):
+    pedra_i = obtem_pedra(g, i)
+    if pedra_i == 2:
+        return g
+    else:
+        return coloca_pedra(g, i, 2)
+
+
 
 
  
 
     
+
+
 
