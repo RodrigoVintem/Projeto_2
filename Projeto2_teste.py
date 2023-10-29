@@ -468,8 +468,34 @@ def remove_pedra(g, i):
     else:
         return coloca_pedra(g, i, 2)
 
+def remove_cadeia(g, t):
+    pecas_a_remover = list(t)
+    for i in pecas_a_remover:
+        g = remove_pedra(g, i)
+    return g
 
+def eh_goban(arg):
+    #devolve True caso o seu argumento seja um TAD goban e False caso contrario.
+    linhas = [linha.split() for linha in arg.strip().split('\n')]
+    num_colunas = len(linhas[0])
+    tamanho_valido = [9, 13, 19]
 
+    if (
+        not isinstance(arg, str) or
+        len(linhas) < 3 or
+        len(linhas) > 21 or
+        num_colunas not in tamanho_valido
+        ):
+        return False
+
+    for linha in linhas[1:-1]:
+        if len(linha) - 2 != num_colunas:
+            return False
+        for char in linha[1:-1]:
+            if char not in 'XO.':
+                return False
+
+    return True                
 
  
 
