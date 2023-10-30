@@ -497,6 +497,50 @@ def eh_goban(arg):
 
     return True                
 
+def eh_intersecao_valida(g, i):
+    pedra_i = obtem_pedra(g, i)
+    if pedra_i == 2:
+        return True
+    else:
+        return False
+    
+def gobans_iguais(g1, g2):
+    if eh_goban(g1) and eh_goban(g2) and g1 == g2:
+        return True
+    else:
+        return False
+    
+def goban_para_str(g):
+    return g
+
+def obtem_territorios(g):
+    territorios = []  # Alterei para uma lista em vez de uma tupla
+    dimensoes = obtem_ultima_intersecao(g)  # Obtenha as dimensões do tabuleiro
+
+    # Divide o tabuleiro em linhas com uma lista
+    linhas = g.strip().split('\n')[1:-1]
+
+    # Remova espaços em branco e números no início e no final das linhas
+    linhas_limpas = [linha[3:-3].replace(' ', '') for linha in linhas]
+
+    # Crie uma lista de listas a partir das linhas
+    tabuleiro = [list(linha) for linha in linhas_limpas]
+
+    visitados = set()  # Crie um conjunto para rastrear interseções já visitadas
+
+    for linha_num, linha in enumerate(tabuleiro):
+        for coluna_num, intersecao in enumerate(linha):
+            coordenada = (chr(coluna_num + 65), dimensoes[1] - linha_num)
+
+            if intersecao != '.' and coordenada not in visitados:
+                cadeia = obtem_cadeia(g, coordenada)
+                territorios.append(cadeia)
+                visitados.update(cadeia)
+
+    return ordena_intersecoes(territorios)
+
+
+
  
 
     
