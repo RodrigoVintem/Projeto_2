@@ -427,9 +427,16 @@ def obtem_cadeia(g, i):
 
     return tuple(ordena_intersecoes(cadeia))
 
+estado_goban = None
+
 def coloca_pedra(g, i, p):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
     # Divide o tabuleiro em linhas com uma lista
-    linhas = g.split('\n')[1:-1] 
+    linhas = estado_goban.split('\n')[1:-1] 
 
     # Remove espaços em branco e números no início e no final das linhas
     linhas_limpas = [linha[3:-3].replace(' ', '') for linha in linhas] 
@@ -459,7 +466,9 @@ def coloca_pedra(g, i, p):
             elif tabuleiro[linha][coluna] == 'X':
                 ip.append((chr(65 + coluna), n - linha))
 
-    return cria_goban(n, ib, ip)
+    estado_goban = cria_goban(n, ib, ip)
+
+    return estado_goban
 
 def remove_pedra(g, i):
     pedra_i = obtem_pedra(g, i)
@@ -511,7 +520,12 @@ def gobans_iguais(g1, g2):
         return False
     
 def goban_para_str(g):
-    return g
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+        
+    return estado_goban
 
 def obtem_territorios(g):
     territorios = []  # Alterei para uma lista em vez de uma tupla
@@ -538,7 +552,6 @@ def obtem_territorios(g):
                 visitados.update(cadeia)
 
     return ordena_intersecoes(territorios)
-
 
 
  
