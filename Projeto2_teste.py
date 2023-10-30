@@ -1,4 +1,6 @@
 #2.1.1
+estado_goban = None
+
 def cria_intersecao(col, lin):
     col = col.strip()
 
@@ -108,7 +110,7 @@ def eh_pedra_branca(p):
         return True
     else:
         return False
-    
+   
 def eh_pedra_preta(p):
     if p == 1:
         return True
@@ -407,9 +409,14 @@ def obtem_pedra(g, i):
         raise ValueError('obtem_pedra: argumento invalido')
 
 def obtem_cadeia(g, i):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
     # Devolve a tupla formada pelas interseções da cadeia que passa pela interseção i
-    tipo_pedra = obtem_pedra(g, i)
-    dimensoes = obtem_ultima_intersecao(g)
+    tipo_pedra = obtem_pedra(estado_goban, i)
+    dimensoes = obtem_ultima_intersecao(estado_goban)
 
     visitados = set()
     cadeia = set()
@@ -419,15 +426,13 @@ def obtem_cadeia(g, i):
         intersecao = pilha.pop() # Retira a interseção do topo da pilha
         if intersecao not in visitados:
             visitados.add(intersecao) # Marca a interseção como visitada
-            if obtem_pedra(g, intersecao) == tipo_pedra:
+            if obtem_pedra(estado_goban, intersecao) == tipo_pedra:
                 cadeia.add(intersecao)
                 # Adiciona as interseções adjacentes à pilha para continuar a busca
                 adjacentes = obtem_intersecoes_adjacentes(intersecao, dimensoes)
                 pilha.extend(adjacentes)
 
     return tuple(ordena_intersecoes(cadeia))
-
-estado_goban = None
 
 def coloca_pedra(g, i, p):
     global estado_goban
@@ -524,7 +529,7 @@ def goban_para_str(g):
 
     if estado_goban is None:
         estado_goban = g
-        
+
     return estado_goban
 
 def obtem_territorios(g):
@@ -553,8 +558,6 @@ def obtem_territorios(g):
 
     return ordena_intersecoes(territorios)
 
-
- 
 
     
 
