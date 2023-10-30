@@ -110,7 +110,7 @@ def eh_pedra_branca(p):
         return True
     else:
         return False
-   
+    
 def eh_pedra_preta(p):
     if p == 1:
         return True
@@ -558,6 +558,27 @@ def obtem_territorios(g):
 
     return ordena_intersecoes(territorios)
 
+def obtem_adjacentes_diferentes(g, t):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
+    resultado = set()
+
+    for intersecoes in t:
+        if obtem_pedra(estado_goban, intersecoes) != 2:
+            intersecoes_pedras = obtem_intersecoes_adjacentes(intersecoes, obtem_ultima_intersecao(estado_goban))
+            for intersecao in intersecoes_pedras:
+                if obtem_pedra(estado_goban, intersecao) == 2:
+                    resultado.add(intersecao)
+        else:
+            intersecoes_livres = obtem_intersecoes_adjacentes(intersecoes, obtem_ultima_intersecao(estado_goban))
+            for intersecao in intersecoes_livres:
+                if obtem_pedra(estado_goban, intersecao) != 2:
+                    resultado.add(intersecao)
+    return ordena_intersecoes(resultado)
+   
 
     
 
