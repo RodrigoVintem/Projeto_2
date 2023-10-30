@@ -532,12 +532,16 @@ def goban_para_str(g):
 
     return estado_goban
 
-def obtem_territorios(g):
-    territorios = []  # Alterei para uma lista em vez de uma tupla
-    dimensoes = obtem_ultima_intersecao(g)  # Obtenha as dimensões do tabuleiro
+def obtem_territorios_vazios(g):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
+    dimensoes = obtem_ultima_intersecao(estado_goban)
 
     # Divide o tabuleiro em linhas com uma lista
-    linhas = g.strip().split('\n')[1:-1]
+    linhas = estado_goban.strip().split('\n')[1:-1]
 
     # Remova espaços em branco e números no início e no final das linhas
     linhas_limpas = [linha[3:-3].replace(' ', '') for linha in linhas]
@@ -545,18 +549,77 @@ def obtem_territorios(g):
     # Crie uma lista de listas a partir das linhas
     tabuleiro = [list(linha) for linha in linhas_limpas]
 
-    visitados = set()  # Crie um conjunto para rastrear interseções já visitadas
+    visitados = set()  # Conjunto para rastrear interseções já visitadas
+    territorios = []
+
+    def todas_adjacentes_vazias(coordenada):
+        for adjacente in obtem_intersecoes_adjacentes(coordenada, dimensoes):
+            if obtem_pedra(estado_goban, adjacente) != 2:  # Verifica se não é uma pedra de jogador
+                return False
+        return True
 
     for linha_num, linha in enumerate(tabuleiro):
         for coluna_num, intersecao in enumerate(linha):
             coordenada = (chr(coluna_num + 65), dimensoes[1] - linha_num)
 
-            if intersecao != '.' and coordenada not in visitados:
-                cadeia = obtem_cadeia(g, coordenada)
-                territorios.append(cadeia)
-                visitados.update(cadeia)
+            if intersecao == '.' and coordenada not in visitados and todas_adjacentes_vazias(coordenada):
+                territorio = set()
+                fila = [coordenada]
 
-    return ordena_intersecoes(territorios)
+                while fila:
+                    atual = fila.pop()
+                    visitados.add(atual)
+                    territorio.add(atual)
+
+                    for adjacente in obtem_intersecoes_adjacentes(atual, dimensoes):
+                        if obtem_pedra(estado_goban, adjacente) == 2 and adjacente not in visitados:
+                            fila.append(adjacente)
+
+                territorios.append(tuple(sorted(territorio)))
+
+    return tuple(sorted(territorios))
+
+def obtem_territorios(g):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
+    possiveis_territorios = obtem_territorios_vazios(estado_goban)
+    dimensoes = obtem_ultima_intersecao(estado_goban)
+    caixa_1 = set()
+    caixa_2 = ()
+    caixa_pedras= set()
+    caixa_pedras_2 = ()
+    caixa_final = ()
+    i = 0
+    ii = -1
+
+    for territorios in possiveis_territorios:
+        i += 1
+        for intersecao in territorios:
+            if obtem_intersecoes_adjacentes(intersecao, dimensoes) not in caixa_1:
+                adjacente = obtem_intersecoes_adjacentes(intersecao, dimensoes)
+                for x in adjacente:
+                    if x not in caixa_1:
+                        caixa_1.add(x)
+        caixa_2 +=(caixa_1,)
+        caixa_1 = set()
+        
+
+    # Converter os elementos dentro da caixa para as suas respetivas pedras, 2, 0 ou 1
+    for tuplos in caixa_2:
+        for elementos in tuplos:
+            caixa_pedras.add(obtem_pedra(estado_goban, elementos))
+        caixa_pedras_2 += (caixa_pedras,)
+        caixa_pedras = set()    
+
+    for tuplos in caixa_pedras_2:
+        ii += 1
+        if all(x in [0,2] for x in tuplos) or all(x in [0,1] for x in tuplos):
+            caixa_final += ((possiveis_territorios[ii]),)
+
+    return caixa_final
 
 def obtem_adjacentes_diferentes(g, t):
     global estado_goban
@@ -578,9 +641,8 @@ def obtem_adjacentes_diferentes(g, t):
                 if obtem_pedra(estado_goban, intersecao) != 2:
                     resultado.add(intersecao)
     return ordena_intersecoes(resultado)
-   
-
-    
+               
+  
 
 
 
