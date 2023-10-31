@@ -747,3 +747,33 @@ def obtem_pedras_jogadores(g):
 
     return (pedras_brancas, pedras_pretas)
 
+def calcula_pontos(g):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
+    pontos_j_b = obtem_pedras_jogadores(estado_goban)[0]
+    pontos_j_p = obtem_pedras_jogadores(estado_goban)[1]
+    
+    territorios = obtem_territorios(estado_goban)
+    territorio_pertence = territorio_de_quem(estado_goban, territorios)
+    
+    tamanho_territorio = len(territorios[0])
+    if territorio_pertence == 0:
+        pontos_j_b += tamanho_territorio
+    elif territorio_pertence == 1:  
+        pontos_j_p += tamanho_territorio    
+    return (pontos_j_b, pontos_j_p) 
+
+def territorio_de_quem(g, territorio):
+    #Descobre a quem pertence o território
+    for territorios in territorio:
+        for intersecao in territorios:
+            adjacentes = obtem_intersecoes_adjacentes(intersecao, obtem_ultima_intersecao(g))
+            for tuplos in adjacentes:
+                if obtem_pedra(g, tuplos) == 0:
+                    return 0
+                elif obtem_pedra(g, tuplos) == 1:
+                    return 1
+                
