@@ -85,8 +85,16 @@ def remove_duplicados(t):
     return result
 
 def ordena_intersecoes(t):
+    if isinstance(t, set):
+        t = tuple(t)
+
     if len(t) == 1:
         t = t[0]
+
+    for x in t:
+        if not isinstance(x, tuple):
+            return t 
+
     tup = remove_duplicados(t)
     tup_ordenado = sorted(tup, key = lambda x: (x[1], x[0]))
     return tuple(tup_ordenado)   
@@ -647,5 +655,77 @@ def obtem_adjacentes_diferentes(g, t):
 
     return ordena_intersecoes(resultado) 
 
+def jogada(g, i, p):
+    global estado_goban
+
+    if estado_goban is None:
+        estado_goban = g
+
+    cadeia = set()
+    caixa_pedras= set()
+    caixa_pedras_2 = ()  
+    cadeia_remover = () 
+    
+    if eh_intersecao_valida(estado_goban, i):
+        estado_goban = coloca_pedra(estado_goban, i, p)
+    else:
+        raise ValueError('jogada: argumentos invalidos')
+    
+    cadeias_adjacentes = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(estado_goban))
+    
+    for tuplos in cadeias_adjacentes:
+        caixa_pedras.add(obtem_pedra(estado_goban, tuplos))
+        caixa_pedras_2 += (caixa_pedras,)
+        caixa_pedras = set()
+        for x in caixa_pedras_2:
+            if all(set([0]) == i for i in caixa_pedras_2) or all(set([1]) == i for i in caixa_pedras_2):
+                return estado_goban
+
+    for x in cadeias_adjacentes:
+        pedra = obtem_pedra(estado_goban, x)
+        if obtem_pedra(estado_goban, x) != 2:
+            cadeia_remover = obtem_cadeia(estado_goban, x)
+            for t in cadeia_remover:
+                if not isinstance(t, tuple):
+                    cadeia_remover = (cadeia_remover,)
+                    break
+            elementos = obtem_cadeia(estado_goban, x)
+            for t in elementos:
+                if not isinstance(t, tuple):
+                    elementos = (elementos,)
+                    break
+            for ele in elementos:
+                triagem = obtem_intersecoes_adjacentes(ele, obtem_ultima_intersecao(estado_goban))
+                for tuplos in triagem:
+                    if obtem_pedra(estado_goban, tuplos) != 2 and obtem_pedra(estado_goban, tuplos) != pedra:
+                        cadeia.add(tuplos)
+                
+            for elemento in cadeia:
+                pedra = obtem_pedra(estado_goban, x)
+
+                for tuplos in cadeia:
+                    caixa_pedras.add(obtem_pedra(estado_goban, tuplos))
+                    caixa_pedras_2 += (caixa_pedras,)
+                    caixa_pedras = set()  
+
+                if pedra == 1:
+                    if all(set([0]) == i for i in caixa_pedras_2):
+                        if len(cadeia_remover) == 1:
+                            estado_goban = remove_pedra(estado_goban, x)
+                            return estado_goban
+                        elif len(cadeia_remover) > 1:    
+                            estado_goban = remove_cadeia(estado_goban, cadeia_remover)
+                            return estado_goban 
+                elif pedra == 0:
+                    #Vê se todos os elementos em caixa_pedras_2 são 1
+                    if all(set([1]) == i for i in caixa_pedras_2):
+                        if len(cadeia_remover) == 1:
+                            estado_goban = remove_pedra(estado_goban, x)
+                            return estado_goban
+                        elif len(cadeia_remover) > 1:    
+                            estado_goban = remove_cadeia(estado_goban, cadeia_remover)
+                            return estado_goban    
+    return estado_goban        
+            
 
 
