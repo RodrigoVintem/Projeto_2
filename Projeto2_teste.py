@@ -677,16 +677,18 @@ def jogada(g, i, p):
         caixa_pedras.add(obtem_pedra(estado_goban, tuplos))
         caixa_pedras_2 += (caixa_pedras,)
         caixa_pedras = set()
-        for x in caixa_pedras_2:
-            if all(set([0]) == i for i in caixa_pedras_2) or all(set([1]) == i for i in caixa_pedras_2):
-                return estado_goban
+    for x in caixa_pedras_2:
+        if all(set([0]) == i for i in caixa_pedras_2) or all(set([1]) == i for i in caixa_pedras_2):
+            return estado_goban
+
+    caixa_pedras_2 = ()
 
     for x in cadeias_adjacentes:
         pedra = obtem_pedra(estado_goban, x)
         if obtem_pedra(estado_goban, x) != 2:
             cadeia_remover = obtem_cadeia(estado_goban, x)
-            for t in cadeia_remover:
-                if not isinstance(t, tuple):
+            for ts in cadeia_remover:
+                if not isinstance(ts, tuple):
                     cadeia_remover = (cadeia_remover,)
                     break
             elementos = obtem_cadeia(estado_goban, x)
@@ -727,5 +729,21 @@ def jogada(g, i, p):
                             return estado_goban    
     return estado_goban        
             
+def obtem_pedras_jogadores(g):
+    global estado_goban
 
+    if estado_goban is None:
+        estado_goban = g
+
+    pedras_brancas = 0
+    pedras_pretas = 0
+
+    for linha in estado_goban.split('\n')[1:-1]:
+        for intersecao in linha:
+            if intersecao == 'O':  #  0 represente uma pedra branca
+                pedras_brancas += 1
+            elif intersecao == 'X':  #  1 represente uma pedra preta
+                pedras_pretas += 1
+
+    return (pedras_brancas, pedras_pretas)
 
