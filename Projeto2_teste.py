@@ -50,7 +50,7 @@ def intersecoes_iguais(i1, i2):
             return False
     
 def intersecao_para_str(i):
-    return(i[0] + str(i[1]))  
+    return (i[0] + str(i[1]))  
  
 def str_para_intersecao(s):
     col = s[0]
@@ -85,11 +85,12 @@ def remove_duplicados(t):
     return result
 
 def ordena_intersecoes(t):
+    if len(t) == 1:
+        t = t[0]
     tup = remove_duplicados(t)
     tup_ordenado = sorted(tup, key = lambda x: (x[1], x[0]))
     return tuple(tup_ordenado)   
-   
-#2.1.2     
+
 def cria_pedra_branca():
     return 0
 
@@ -139,6 +140,7 @@ def eh_pedra_jogador(p):
         return False
 
 #2.1.3
+
 def cria_goban_vazio_9(n):
 
     territorio = '  '
@@ -619,7 +621,9 @@ def obtem_territorios(g):
         if all(x in [0,2] for x in tuplos) or all(x in [0,1] for x in tuplos):
             caixa_final += ((possiveis_territorios[ii]),)
 
-    return caixa_final
+    resultado = ((ordena_intersecoes(caixa_final)),)  
+
+    return resultado
 
 def obtem_adjacentes_diferentes(g, t):
     global estado_goban
@@ -640,9 +644,8 @@ def obtem_adjacentes_diferentes(g, t):
             for intersecao in intersecoes_livres:
                 if obtem_pedra(estado_goban, intersecao) != 2:
                     resultado.add(intersecao)
-    return ordena_intersecoes(resultado)
-               
-  
+
+    return ordena_intersecoes(resultado) 
 
 
 
