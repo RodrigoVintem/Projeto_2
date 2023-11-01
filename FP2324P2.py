@@ -195,33 +195,25 @@ def obtem_pedra(g, i):
             return 1
 
 def obtem_cadeia(g, i):
-    def is_valid(x, y):
-        return 0 <= x < len(g) and 0 <= y < len(g[0])
+    # Devolve a tupla formada pelas interseções da cadeia que passa pela interseção i
+    tipo_pedra = obtem_pedra(g, i)
+    dimensoes = obtem_ultima_intersecao(g)
 
-    def get_neighbors(x, y):
-        return [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+    visitados = set()
+    cadeia = set()
+    pilha = [i]
 
-    def flood_fill(x, y, visited, color):
-        visited[x][y] = True
-        chain = [(chr(x + 65), y)]
-        
-        for nx, ny in get_neighbors(x, y):
-            if is_valid(nx, ny) and not visited[nx][ny] and g[nx][ny] == color:
-                chain.extend(flood_fill(nx, ny, visited, color))
-        
-        return chain
+    while pilha:
+        intersecao = pilha.pop() # Retira a interseção do topo da pilha
+        if intersecao not in visitados:
+            visitados.add(intersecao) # Marca a interseção como visitada
+            if obtem_pedra(g, intersecao) == tipo_pedra:
+                cadeia.add(intersecao)
+                # Adiciona as interseções adjacentes à pilha para continuar a busca
+                adjacentes = obtem_intersecoes_adjacentes(intersecao, dimensoes)
+                pilha.extend(adjacentes)
 
-    x, y = ord(i[0]) - ord('A'), i[1] - 1
-    if not is_valid(x, y):
-        return []
-
-    visited = [[False] * len(g[0]) for _ in range(len(g))]
-    color = g[x][y]
-
-    if color == 0:
-        return []
-
-    return ordena_intersecoes(flood_fill(x, y, visited, color))
+    return tuple(ordena_intersecoes(cadeia))
 
 def coloca_pedra(g, i, p):
     # Verifica se os argumentos são válidos
@@ -344,7 +336,7 @@ def goban_para_str(g):
 
     if not isinstance(g, list) or len(g) == 0:
         raise ValueError('goban_para_str: argumento inválido')
-    else:
+    elif len(g) == 9:
         str_goban = '   ' + ' '.join([chr(i + 65) for i in range(len(g[0]))]) + '\n'
         for i in range(len(g)):
             str_goban += ' ' + str(len(g) - i) + ' '
@@ -358,70 +350,135 @@ def goban_para_str(g):
             str_goban += ' ' + str(len(g) - i) + '\n'  # Remova o espaço extra aqui
         str_goban += '   ' + ' '.join([chr(i + 65) for i in range(len(g[0]))])
         return str_goban
+    
+    else:
+        territorio = '  '
+        n = len(g)
+        b, a = n, n
+        i = 0
+        while i < n:
+            territorio += ' ' + ''.join([chr(65+i)]) # Adiciona letras das colunas (A, B, C, etc.)
+            i += 1  
+        if a >= 10:
+            territorio += '\n' + '' + ''.join(str(a)) + ' '
+        else:    
+            territorio += '\n' + ' ' + ''.join(str(a)) + ' '
+        i = 0
+        while a > 1:
+            while i < n:
+                if obtem_pedra(g, (chr(65+i), a)) == 0:
+                    territorio += ''.join('O') + ' '
+                    i +=1
+                elif obtem_pedra(g, (chr(65+i), a)) == 1:
+                    territorio += ''.join('X') + ' '
+                    i +=1    
+                else:
+                    territorio += ''.join('.') + ' '
+                    i +=1
+            if b == a:
+                territorio += ' ' + ''.join(str(a)) + '\n'             
+            elif a >= 10:
+                territorio += ' ' + ''.join(str(a)) + '\n'
+            else:    
+                territorio += ' ' + ''.join(str(a)) + '\n'
+            a = a - 1 # Reduz o número de colunas para a próxima linha
+            if a >= 10:
+                territorio +='' + ''.join(str(a)) + ' '
+            else:
+                territorio +=' ' + ''.join(str(a)) + ' '
+            i = 0 
+        while i < n:
+            if obtem_pedra(g, (chr(65+i), a)) == 0:
+                territorio += ''.join('O') + ' '
+                i +=1
+            elif obtem_pedra(g, (chr(65+i), a)) == 1:
+                territorio += ''.join('X') + ' '
+                i +=1    
+            else:
+                territorio += ''.join('.') + ' '
+                i +=1
+        territorio += ' ' + ''.join(str(a)) + '\n' + '   ' 
+        i=0
+        while i < n-1:
+            territorio += ' '.join([chr(65+i)]) + ' ' 
+            i += 1
+        territorio += ' '.join([chr(65+i)]) 
+        return territorio        
 
+def vizinhas(i, j):
+    # Esta função retorna as coordenadas das interseções vizinhas
+    # a partir das coordenadas (i, j).
+    return [
+        (i - 1, j),  # Interseção acima
+        (i + 1, j),  # Interseção abaixo
+        (i, j - 1),  # Interseção à esquerda
+        (i, j + 1),  # Interseção à direita
+    ]
 
-def obtem_territorios_vazios(g):
-    global estado_goban
+def busca_territorio(i, j, terr, g):
+            if (
+                i < 0 or i >= len(g) or
+                j < 0 or j >= len(g[0]) or
+                g[i][j] != 2
+            ):
+             return
+            
 
-    if estado_goban is None:
-        estado_goban = g
+            terr.add((chr(j + 65), len(g) - i))
+            g[i][j] = 3  # Marca a interseção como visitada
 
-    dimensoes = obtem_ultima_intersecao(estado_goban)
-
-    # Divide o tabuleiro em linhas com uma lista
-    linhas = estado_goban.strip().split('\n')[1:-1]
-
-    # Remova espaços em branco e números no início e no final das linhas
-    linhas_limpas = [linha[3:-3].replace(' ', '') for linha in linhas]
-
-    # Crie uma lista de listas a partir das linhas
-    tabuleiro = [list(linha) for linha in linhas_limpas]
-
-    visitados = set()  # Conjunto para rastrear interseções já visitadas
-    territorios = []
-
-    def todas_adjacentes_vazias(coordenada):
-        for adjacente in obtem_intersecoes_adjacentes(coordenada, dimensoes):
-            if obtem_pedra(estado_goban, adjacente) != 2:  # Verifica se não é uma pedra de jogador
-                return False
-        return True
-
-    for linha_num, linha in enumerate(tabuleiro):
-        for coluna_num, intersecao in enumerate(linha):
-            coordenada = (chr(coluna_num + 65), dimensoes[1] - linha_num)
-
-            if intersecao == '.' and coordenada not in visitados and todas_adjacentes_vazias(coordenada):
-                territorio = set()
-                fila = [coordenada]
-
-                while fila:
-                    atual = fila.pop()
-                    visitados.add(atual)
-                    territorio.add(atual)
-
-                    for adjacente in obtem_intersecoes_adjacentes(atual, dimensoes):
-                        if obtem_pedra(estado_goban, adjacente) == 2 and adjacente not in visitados:
-                            fila.append(adjacente)
-
-                territorios.append(tuple(sorted(territorio)))
-
-    return tuple(sorted(territorios))
+            for ni, nj in vizinhas(i, j):
+                busca_territorio(ni, nj, terr, g)
 
 def obtem_territorios(g):
-    global estado_goban
+    def obtem_territorios_vazios(g):
+        
+        territorios = []
+        for i in range(len(g)):
+            for j in range(len(g[i])):
+                if g[i][j] == 2:
+                    terr = set()
+                    busca_territorio(i, j, terr, g)
+                    if terr:
+                        territorios.append(tuple(sorted(terr)))
+    
+        # Restaura o estado original das interseções
+        for i in range(len(g)):
+            for j in range(len(g[i])):
+                if g[i][j] == 3:
+                    g[i][j] = 2
 
-    if estado_goban is None:
-        estado_goban = g
+        return tuple(sorted(territorios, key=lambda terr: (terr[0][1], terr[0][0])))
 
-    possiveis_territorios = obtem_territorios_vazios(estado_goban)
-    dimensoes = obtem_ultima_intersecao(estado_goban)
+    def obtem_intersecoes_adjacentes(i, l):
+        max_col = l[0]
+        max_lin = l[1]
+        resultado = ()
+        #Vê se há interseções adjacentes em baixo
+        if i[1] > 1:
+            resultado += ((i[0], i[1]-1),)
+        #Vê se há interseções adjacentes à esquerda
+        if i[0] != 'A':
+            resultado += ((chr(ord(i[0])-1), i[1]),) 
+        #Vê se há interseções adjacentes à direita
+        if i[0] != max_col:
+            resultado += ((chr(ord(i[0])+1), i[1]),)
+         #Vê se há interseções adjacentes em cima
+        if i[1] < max_lin: 
+            resultado += ((i[0], i[1]+1),)  
+
+        return resultado   
+
+
+    possiveis_territorios = obtem_territorios_vazios(g)
+    dimensoes = obtem_ultima_intersecao(g)
     caixa_1 = set()
     caixa_2 = ()
     caixa_pedras= set()
     caixa_pedras_2 = ()
     caixa_final = ()
-    i = 0
     ii = -1
+    i=0
 
     for territorios in possiveis_territorios:
         i += 1
@@ -438,7 +495,7 @@ def obtem_territorios(g):
     # Converter os elementos dentro da caixa para as suas respetivas pedras, 2, 0 ou 1
     for tuplos in caixa_2:
         for elementos in tuplos:
-            caixa_pedras.add(obtem_pedra(estado_goban, elementos))
+            caixa_pedras.add(obtem_pedra(g, elementos))
         caixa_pedras_2 += (caixa_pedras,)
         caixa_pedras = set()    
 
@@ -452,115 +509,133 @@ def obtem_territorios(g):
     return resultado
 
 def obtem_adjacentes_diferentes(g, t):
-    global estado_goban
+    # Verifica se os argumentos são válidos
+    #devolve o tuplo ordenado formado pelas interseoes adjacentes as intersecoes do tuplo t:
+    #(a) livres, se as intersecoes do tuplo t estao ocupadas por pedras de jogador
+    #(b) ocupadas por pedras de jogador, se as intersecoes do tuplo t estao livres
+    #(a) corresponde as liberdades de uma cadeia de pedras,enquanto que (b) corresponde a fronteira de um territorio.
 
-    if estado_goban is None:
-        estado_goban = g
+    if (
+        not isinstance(g, list) or
+        not isinstance(t, tuple) or
+        not all(isinstance(coord, tuple) and len(coord) == 2 for coord in t)
+    ):
+        raise ValueError('obtem_adjacentes_diferentes: argumento invalido')
+
+    def obtem_intersecoes_adjacentes(i, l):
+        max_col = l[0]
+        max_lin = l[1]
+        resultado = ()
+        #Vê se há interseções adjacentes em baixo
+        if i[1] > 1:
+            resultado += ((i[0], i[1]-1),)
+        #Vê se há interseções adjacentes à esquerda
+        if i[0] != 'A':
+            resultado += ((chr(ord(i[0])-1), i[1]),) 
+        #Vê se há interseções adjacentes à direita
+        if i[0] != max_col:
+            resultado += ((chr(ord(i[0])+1), i[1]),)
+         #Vê se há interseções adjacentes em cima
+        if i[1] < max_lin: 
+            resultado += ((i[0], i[1]+1),)  
+
+        return resultado   
 
     resultado = set()
 
     for intersecoes in t:
-        if obtem_pedra(estado_goban, intersecoes) != 2:
-            intersecoes_pedras = obtem_intersecoes_adjacentes(intersecoes, obtem_ultima_intersecao(estado_goban))
+        if obtem_pedra(g, intersecoes) != 2:
+            intersecoes_pedras = obtem_intersecoes_adjacentes(intersecoes, obtem_ultima_intersecao(g))
             for intersecao in intersecoes_pedras:
-                if obtem_pedra(estado_goban, intersecao) == 2:
+                if obtem_pedra(g, intersecao) == 2:
                     resultado.add(intersecao)
         else:
-            intersecoes_livres = obtem_intersecoes_adjacentes(intersecoes, obtem_ultima_intersecao(estado_goban))
+            intersecoes_livres = obtem_intersecoes_adjacentes(intersecoes, obtem_ultima_intersecao(g))
             for intersecao in intersecoes_livres:
-                if obtem_pedra(estado_goban, intersecao) != 2:
+                if obtem_pedra(g, intersecao) != 2:
                     resultado.add(intersecao)
 
     return ordena_intersecoes(resultado) 
 
 def jogada(g, i, p):
-    global estado_goban
-
-    if estado_goban is None:
-        estado_goban = g
+    if eh_intersecao_valida(g, i) and p in [0, 1]:
+        g = coloca_pedra(g, i, p)
+    else:
+        raise ValueError('jogada: argumentos inválidos')
 
     cadeia = set()
     caixa_pedras= set()
     caixa_pedras_2 = ()  
     cadeia_remover = () 
-    
-    if eh_intersecao_valida(estado_goban, i):
-        estado_goban = coloca_pedra(estado_goban, i, p)
-    else:
-        raise ValueError('jogada: argumentos invalidos')
-    
-    cadeias_adjacentes = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(estado_goban))
-    
+
+    cadeias_adjacentes = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
+
     for tuplos in cadeias_adjacentes:
-        caixa_pedras.add(obtem_pedra(estado_goban, tuplos))
+        caixa_pedras.add(obtem_pedra(g, tuplos))
         caixa_pedras_2 += (caixa_pedras,)
         caixa_pedras = set()
     for x in caixa_pedras_2:
         if all(set([0]) == i for i in caixa_pedras_2) or all(set([1]) == i for i in caixa_pedras_2):
-            return estado_goban
+            return g
 
     caixa_pedras_2 = ()
 
     for x in cadeias_adjacentes:
-        pedra = obtem_pedra(estado_goban, x)
-        if obtem_pedra(estado_goban, x) != 2:
-            cadeia_remover = obtem_cadeia(estado_goban, x)
+        pedra = obtem_pedra(g, x)
+        if obtem_pedra(g, x) != 2:
+            cadeia_remover = obtem_cadeia(g, x)
             for ts in cadeia_remover:
                 if not isinstance(ts, tuple):
                     cadeia_remover = (cadeia_remover,)
                     break
-            elementos = obtem_cadeia(estado_goban, x)
+            elementos = obtem_cadeia(g, x)
             for t in elementos:
                 if not isinstance(t, tuple):
                     elementos = (elementos,)
                     break
             for ele in elementos:
-                triagem = obtem_intersecoes_adjacentes(ele, obtem_ultima_intersecao(estado_goban))
+                triagem = obtem_intersecoes_adjacentes(ele, obtem_ultima_intersecao(g))
                 for tuplos in triagem:
-                    if obtem_pedra(estado_goban, tuplos) != 2 and obtem_pedra(estado_goban, tuplos) != pedra:
+                    if obtem_pedra(g, tuplos) != 2 and obtem_pedra(g, tuplos) != pedra:
                         cadeia.add(tuplos)
                 
             for elemento in cadeia:
-                pedra = obtem_pedra(estado_goban, x)
+                pedra = obtem_pedra(g, x)
 
                 for tuplos in cadeia:
-                    caixa_pedras.add(obtem_pedra(estado_goban, tuplos))
+                    caixa_pedras.add(obtem_pedra(g, tuplos))
                     caixa_pedras_2 += (caixa_pedras,)
                     caixa_pedras = set()  
 
                 if pedra == 1:
                     if all(set([0]) == i for i in caixa_pedras_2):
                         if len(cadeia_remover) == 1:
-                            estado_goban = remove_pedra(estado_goban, x)
-                            return estado_goban
+                            g = remove_pedra(g, x)
+                            return g
                         elif len(cadeia_remover) > 1:    
-                            estado_goban = remove_cadeia(estado_goban, cadeia_remover)
-                            return estado_goban 
+                            g = remove_cadeia(g, cadeia_remover)
+                            return g 
                 elif pedra == 0:
                     #Vê se todos os elementos em caixa_pedras_2 são 1
                     if all(set([1]) == i for i in caixa_pedras_2):
                         if len(cadeia_remover) == 1:
-                            estado_goban = remove_pedra(estado_goban, x)
-                            return estado_goban
+                            g = remove_pedra(gn, x)
+                            return g
                         elif len(cadeia_remover) > 1:    
-                            estado_goban = remove_cadeia(estado_goban, cadeia_remover)
-                            return estado_goban    
-    return estado_goban        
-            
+                            g = remove_cadeia(g, cadeia_remover)
+                            return g    
+    return g        
+                              
 def obtem_pedras_jogadores(g):
-    global estado_goban
-
-    if estado_goban is None:
-        estado_goban = g
-
+    
     pedras_brancas = 0
     pedras_pretas = 0
 
-    for linha in estado_goban.split('\n')[1:-1]:
+    for linha in g:
         for intersecao in linha:
-            if intersecao == 'O':  #  0 represente uma pedra branca
+            if intersecao == 0:  #  0 represente uma pedra branca
                 pedras_brancas += 1
-            elif intersecao == 'X':  #  1 represente uma pedra preta
+            elif intersecao == 1:  #  1 represente uma pedra preta
                 pedras_pretas += 1
 
     return (pedras_brancas, pedras_pretas)
