@@ -376,9 +376,9 @@ def goban_para_str(g):
                     territorio += ''.join('.') + ' '
                     i +=1
             if b == a:
-                territorio += ' ' + ''.join(str(a)) + '\n'             
+                territorio += ''.join(str(a)) + '\n'             
             elif a >= 10:
-                territorio += ' ' + ''.join(str(a)) + '\n'
+                territorio += ''.join(str(a)) + '\n'
             else:    
                 territorio += ' ' + ''.join(str(a)) + '\n'
             a = a - 1 # Reduz o número de colunas para a próxima linha
@@ -403,7 +403,7 @@ def goban_para_str(g):
             territorio += ' '.join([chr(65+i)]) + ' ' 
             i += 1
         territorio += ' '.join([chr(65+i)]) 
-        return territorio        
+        return territorio 
 
 def vizinhas(i, j):
     # Esta função retorna as coordenadas das interseções vizinhas
