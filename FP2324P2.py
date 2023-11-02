@@ -767,10 +767,9 @@ def eh_jogada_legal(g, i, p, l):
             else:
                 return True     
 
-def cria_copia_goban(g):
-    import copy
-    copia = copy.deepcopy(g)
-    return copia
+def cria_copia_goban(t):
+    return [list(row) for row in t]
+
 
 def turno_jogador(g, p, l):
     if p == 0:
@@ -819,6 +818,9 @@ def go(n, tb, tn):
     jogada_p = True
     p_desiste = 0
     b_desiste = 0
+    pontos_j_b_msg = ""
+    pontos_j_p_msg = ""
+    
     while p_desiste != 1 or b_desiste != 1:
         if jogada_p:
             p = 1
@@ -826,29 +828,35 @@ def go(n, tb, tn):
             if jogo == False:
                 p_desiste = 1
             jogada_p = False
-            print(goban_para_str(g))
+            tabuleiro_str = goban_para_str(g)
             pontos = calcula_pontos(g)
             pontos_j_b = pontos[0]
             pontos_j_p = pontos[1]
-            print('Branco (O) tem ', pontos_j_b ,' pontos')
-            print('Preto (X) tem ', pontos_j_p ,' pontos')
+            pontos_j_b_msg = 'Branco (O) tem ' + str(pontos_j_b) + ' pontos'
+            pontos_j_p_msg = 'Preto (X) tem ' + str(pontos_j_p) + ' pontos'
         else:
             p = 0
             jogo = turno_jogador(g, p, l)
             if jogo == False:
                 b_desiste = 1
             jogada_p = True
-            print(goban_para_str(g))
+            tabuleiro_str = goban_para_str(g)
             pontos = calcula_pontos(g)
             pontos_j_b = pontos[0]
             pontos_j_p = pontos[1]
-            print('Branco (O) tem ', pontos_j_b ,' pontos')
-            print('Preto (X) tem ', pontos_j_p ,' pontos')
+            pontos_j_b_msg = 'Branco (O) tem ' + str(pontos_j_b) + ' pontos'
+            pontos_j_p_msg = 'Preto (X) tem ' + str(pontos_j_p) + ' pontos'
+    
+    # Fora do loop, você pode imprimir as mensagens de pontuação
+    print(tabuleiro_str)
+    print(pontos_j_b_msg)
+    print(pontos_j_p_msg)
+    
+    # Após o loop, você pode decidir o vencedor com base na pontuação
     if pontos_j_b > pontos_j_p:
         return True
     else:
-        return False 
-   
+        return False
 
 
 
