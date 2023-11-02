@@ -235,7 +235,7 @@ def coloca_pedra(g, i, p):
             g[lin][col] = p
             return g
         else:
-            raise ValueError('coloca_pedra: argumento invalido')
+            return g
 
 def remove_pedra(g, i):
     # Verifica se os argumentos são válidos
@@ -517,10 +517,12 @@ def obtem_adjacentes_diferentes(g, t):
 
     if (
         not isinstance(g, list) or
-        not isinstance(t, tuple) or
-        not all(isinstance(coord, tuple) and len(coord) == 2 for coord in t)
+        not isinstance(t, tuple) 
     ):
         raise ValueError('obtem_adjacentes_diferentes: argumento invalido')
+    elif isinstance(t[0], tuple): 
+        if not all(isinstance(coord, tuple) and len(coord) == 2 for coord in t):
+            raise ValueError('obtem_adjacentes_diferentes: argumento invalido')
 
     def obtem_intersecoes_adjacentes(i, l):
         max_col = l[0]
@@ -666,3 +668,43 @@ def territorio_de_quem(g, territorio):
                 elif obtem_pedra(g, tuplos) == 1:
                     return 1
  
+def eh_jogada_legal(g, i, p, l):
+    if  (
+        not isinstance(g, list) or
+        not isinstance(i, tuple) or
+        not isinstance(p, int) or
+        not isinstance(l, list) or
+        len(g) == 0 or len(i) != 2 or
+        p not in [0, 1]
+        ):
+         raise ValueError('eh_jogada_legal: argumento invalido')
+    print(goban_para_str(l))
+    goban_dep_jogada = coloca_pedra(cria_copia_goban(g), i, p)
+    
+
+    if not gobans_iguais(goban_dep_jogada, l):
+        tipo_pedra = obtem_pedra(goban_dep_jogada, i)
+        cadeia = obtem_cadeia(goban_dep_jogada, i)
+        if not isinstance(cadeia[0], tuple):
+            cadeia = (cadeia,)
+        adjacentes = obtem_adjacentes_diferentes(goban_dep_jogada, cadeia)
+        caixa_pedras = set()
+        caixa_pedras_2 = ()
+
+        for tuplos in adjacentes:
+            caixa_pedras.add(obtem_pedra(goban_dep_jogada, tuplos))
+            caixa_pedras_2 += (caixa_pedras,)
+            caixa_pedras = set()
+        if all(set([tipo_pedra]) == i for i in caixa_pedras_2):
+            goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
+            return False    
+        else:
+            goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
+            return True
+    else:
+        return True 
+
+def cria_copia_goban(g):
+    import copy
+    copia = copy.deepcopy(g)
+    return copia
