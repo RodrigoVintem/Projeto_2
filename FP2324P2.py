@@ -155,18 +155,47 @@ def cria_goban_vazio(n):
 
 def cria_goban(n, ib, ip):
     if n == 9 or n == 13 or n == 19:
-        goban = cria_goban_vazio(n)
-        if len(ib) > 1 and isinstance(ib[0], tuple):
-            for i in range(len(ib)):            
-                goban[(n-1) - (ib[i][1] - 1)][ord(ib[i][0])-65] = 0
+        def cria_goban_9(n, ib, ip):
+            goban = cria_goban_vazio(n)
+            if ib == () and isinstance(ip[0],tuple):
+                for x in ip:
+                    goban[(n-1) - (x[1] - 1)][ord(x[0]) - 65] = 1
+                return goban
+            elif ip == () and isinstance(ib[0],tuple):
+                for x in ib:
+                    goban[(n-1) - (x[1] - 1)][ord(x[0]) - 65] = 0
+                return goban    
+
+            if len(ib) > 1 and isinstance(ib[0], tuple):
+                for i in range(len(ib)):            
+                    goban[(n-1) - (ib[i][1] - 1)][ord(ib[i][0])-65] = 0
+            else:
+                goban[(n-1) - (ib[1] - 1)][ord(ib[0]) - 65] = 0
+            if len(ip) > 1 and isinstance(ip[0], tuple):            
+                for i in range(len(ip)):    
+                    goban[(n-1) - (ip[i][1] - 1)][ord(ip[i][0])-65] = 1
+            else:
+                goban[(n-1) - (ip[1] - 1)][ord(ip[0]) - 65] = 1
+            return goban
+        def cria_goban_13_19(n, ib, ip):
+            goban = cria_goban_vazio(n)
+            if len(ib) > 1 and isinstance(ib[0], tuple):
+                for i in range(len(ib)):            
+                    goban[(n-1) - (ib[i][1] - 1)][ord(ib[i][0])-65] = 0
+            else:
+                goban[(n-1) - (ib[1] - 1)][ord(ib[0]) - 65] = 0
+            if len(ip) > 1 and isinstance(ip[0], tuple):            
+                for i in range(len(ip)):    
+                    goban[(n-1) - (ip[i][1] - 1)][ord(ip[i][0])-65] = 1
+            else:
+                goban[(n-1) - (ip[1] - 1)][ord(ip[0]) - 65] = 1
+            return goban
+        if n == 9:  
+            return cria_goban_9(n, ib, ip)
         else:
-            goban[(n-1) - (ib[1] - 1)][ord(ib[0]) - 65] = 0
-        if len(ip) > 1 and isinstance(ip[0], tuple):            
-            for i in range(len(ip)):    
-                goban[(n-1) - (ip[i][1] - 1)][ord(ip[i][0])-65] = 1
-        else:
-            goban[(n-1) - (ip[1] - 1)][ord(ip[0]) - 65] = 1
-        return goban
+            return cria_goban_13_19(n, ib, ip)
+    else:   
+        raise ValueError('cria_goban: argumento invalido')
 
 def cria_copia_goban(t):
     copia_goban = t
@@ -563,74 +592,50 @@ def obtem_adjacentes_diferentes(g, t):
     return ordena_intersecoes(resultado) 
 
 def jogada(g, i, p):
+    def come(g, i):
+        caixa_pedras= set()
+        caixa_pedras_2 = ()
+
+        adj = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
+        for tuplos in adj:
+            caixa_pedras_2 = ()
+            if obtem_pedra(g, tuplos) != 2:
+                adj_tuplos = obtem_intersecoes_adjacentes(tuplos, obtem_ultima_intersecao(g))
+                cadeia = obtem_cadeia(g, tuplos)
+                if not isinstance(cadeia[0], tuple):
+                    cadeia = (cadeia,)
+                if len(cadeia) == 1:
+                    for tuplos_2 in adj_tuplos:
+                        caixa_pedras.add(obtem_pedra(g, tuplos_2))
+                        caixa_pedras_2 += (caixa_pedras,)
+                        caixa_pedras = set()
+                        #Ver se todos os elementos em caixa_pedras_2 são diferentes do tipo de pedra de tuplos
+                    if all(set([obtem_pedra(g, tuplos)]) != i for i in caixa_pedras_2) and all(set([2]) != i for i in caixa_pedras_2):
+                        g = remove_pedra(g, tuplos)
+                        return True
+                else:
+                    adj_dif = obtem_adjacentes_diferentes(g, cadeia)
+                    if adj_dif != () and not isinstance(adj_dif[0], tuple):
+                        adj_dif = (adj_dif,)
+                    for tuplos_2 in adj_dif:
+                        caixa_pedras.add(obtem_pedra(g, tuplos_2))
+                        caixa_pedras_2 += (caixa_pedras,)
+                        caixa_pedras = set()
+                        #Ver se todos os elementos em caixa_pedras_2 são diferentes do tipo de pedra de tuplos
+                    if all(set([obtem_pedra(g, tuplos)]) != i for i in caixa_pedras_2) and all(set([2]) != i for i in caixa_pedras_2):
+                        g = remove_cadeia(g, cadeia)
+                        return True 
+
+
     if eh_intersecao_valida(g, i) and p in [0, 1]:
         g = coloca_pedra(g, i, p)
+        if come(g, i):
+            return g
+        else:
+            return g
     else:
         raise ValueError('jogada: argumentos inválidos')
 
-    cadeia = set()
-    caixa_pedras= set()
-    caixa_pedras_2 = ()  
-    cadeia_remover = () 
-
-    cadeias_adjacentes = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
-
-    for tuplos in cadeias_adjacentes:
-        caixa_pedras.add(obtem_pedra(g, tuplos))
-        caixa_pedras_2 += (caixa_pedras,)
-        caixa_pedras = set()
-    for x in caixa_pedras_2:
-        if all(set([0]) == i for i in caixa_pedras_2) or all(set([1]) == i for i in caixa_pedras_2):
-            return g
-
-    caixa_pedras_2 = ()
-
-    for x in cadeias_adjacentes:
-        pedra = obtem_pedra(g, x)
-        if obtem_pedra(g, x) != 2:
-            cadeia_remover = obtem_cadeia(g, x)
-            for ts in cadeia_remover:
-                if not isinstance(ts, tuple):
-                    cadeia_remover = (cadeia_remover,)
-                    break
-            elementos = obtem_cadeia(g, x)
-            for t in elementos:
-                if not isinstance(t, tuple):
-                    elementos = (elementos,)
-                    break
-            for ele in elementos:
-                triagem = obtem_intersecoes_adjacentes(ele, obtem_ultima_intersecao(g))
-                for tuplos in triagem:
-                    if obtem_pedra(g, tuplos) != 2 and obtem_pedra(g, tuplos) != pedra:
-                        cadeia.add(tuplos)
-                
-            for elemento in cadeia:
-                pedra = obtem_pedra(g, x)
-
-                for tuplos in cadeia:
-                    caixa_pedras.add(obtem_pedra(g, tuplos))
-                    caixa_pedras_2 += (caixa_pedras,)
-                    caixa_pedras = set()  
-
-                if pedra == 1:
-                    if all(set([0]) == i for i in caixa_pedras_2):
-                        if len(cadeia_remover) == 1:
-                            g = remove_pedra(g, x)
-                            return g
-                        elif len(cadeia_remover) > 1:    
-                            g = remove_cadeia(g, cadeia_remover)
-                            return g 
-                elif pedra == 0:
-                    #Vê se todos os elementos em caixa_pedras_2 são 1
-                    if all(set([1]) == i for i in caixa_pedras_2):
-                        if len(cadeia_remover) == 1:
-                            g = remove_pedra(gn, x)
-                            return g
-                        elif len(cadeia_remover) > 1:    
-                            g = remove_cadeia(g, cadeia_remover)
-                            return g    
-    return g        
-                              
 def obtem_pedras_jogadores(g):
     
     pedras_brancas = 0
@@ -649,6 +654,21 @@ def calcula_pontos(g):
 
     pontos_j_b = obtem_pedras_jogadores(g)[0]
     pontos_j_p = obtem_pedras_jogadores(g)[1]
+
+    if pontos_j_b == 0 and pontos_j_p != 0:
+        if len(g) == 9:
+            return (pontos_j_b, 81)
+        elif len(g) == 13:
+            return (pontos_j_b, 169)
+        elif len(g) == 19:
+            return (pontos_j_b, 361)
+    elif pontos_j_b != 0 and pontos_j_p == 0:
+        if len(g) == 9:
+            return (81, pontos_j_p)
+        elif len(g) == 13:
+            return (169, pontos_j_p)
+        elif len(g) == 19:
+            return (361, pontos_j_p)
     
     territorios = obtem_territorios(g)
     territorio_pertence = territorio_de_quem(g, territorios)
@@ -711,6 +731,8 @@ def eh_jogada_legal(g, i, p, l):
                         return True
                 else:
                     adj_dif = obtem_adjacentes_diferentes(g, cadeia)
+                    if adj_dif != () and not isinstance(adj_dif[0], tuple):
+                        adj_dif = (adj_dif,)
                     for tuplos_2 in adj_dif:
                         caixa_pedras.add(obtem_pedra(g, tuplos_2))
                         caixa_pedras_2 += (caixa_pedras,)
@@ -719,6 +741,7 @@ def eh_jogada_legal(g, i, p, l):
                     if all(set([obtem_pedra(g, tuplos)]) != i for i in caixa_pedras_2) and all(set([2]) != i for i in caixa_pedras_2):
                         g = remove_pedra(g, tuplos)
                         return True 
+        return False                
                 
     def suicidio(g, i):
         cadeia = obtem_cadeia(goban_dep_jogada, i)
@@ -741,8 +764,91 @@ def eh_jogada_legal(g, i, p, l):
                 return True
             elif suicidio(goban_dep_jogada, i):
                 return False   
+            else:
+                return True     
 
 def cria_copia_goban(g):
     import copy
     copia = copy.deepcopy(g)
     return copia
+
+def turno_jogador(g, p, l):
+    if p == 0:
+        simbolo = 'O'
+    elif p == 1:
+        simbolo = 'X'
+
+    mensagem = "Escreva uma intersecao ou 'P' para passar [" + simbolo + "]:"
+
+    while True:
+        jogada_str = input(mensagem)
+
+        if jogada_str == 'P' or jogada_str == 'p':
+            return False
+
+        if eh_jogada_legal(g, str_para_intersecao(jogada_str), p, l):
+            g = jogada(g, str_para_intersecao(jogada_str), p)
+            return True
+                
+def go(n, tb, tn):
+    if n != 9 and n != 13 and n != 19:
+        raise ValueError('go: argumentos invalidos') 
+
+    if  (
+        not isinstance(n, int) or
+        not isinstance(tb, tuple) or
+        not isinstance(tn, tuple) or
+        not all(isinstance(coord, tuple) and len(coord) == 2 for coord in tb) or
+        not all(isinstance(coord, tuple) and len(coord) == 2 for coord in tn)
+        ): raise ValueError('go: argumentos invalidos')
+
+    if tb == () and tn == ():
+        g = cria_goban_vazio(n)
+    else:    
+        g = cria_goban(n, tb, tn)
+
+    l = cria_copia_goban(g)
+
+    print(goban_para_str(g))
+    pontos = calcula_pontos(g)
+    pontos_j_b = pontos[0]
+    pontos_j_p = pontos[1]
+    print('Branco (O) tem ', pontos_j_b ,' pontos')
+    print('Preto (X) tem ', pontos_j_p ,' pontos')
+
+    jogada_p = True
+    p_desiste = 0
+    b_desiste = 0
+    while p_desiste != 1 or b_desiste != 1:
+        if jogada_p:
+            p = 1
+            jogo = turno_jogador(g, p, l)
+            if jogo == False:
+                p_desiste = 1
+            jogada_p = False
+            print(goban_para_str(g))
+            pontos = calcula_pontos(g)
+            pontos_j_b = pontos[0]
+            pontos_j_p = pontos[1]
+            print('Branco (O) tem ', pontos_j_b ,' pontos')
+            print('Preto (X) tem ', pontos_j_p ,' pontos')
+        else:
+            p = 0
+            jogo = turno_jogador(g, p, l)
+            if jogo == False:
+                b_desiste = 1
+            jogada_p = True
+            print(goban_para_str(g))
+            pontos = calcula_pontos(g)
+            pontos_j_b = pontos[0]
+            pontos_j_p = pontos[1]
+            print('Branco (O) tem ', pontos_j_b ,' pontos')
+            print('Preto (X) tem ', pontos_j_p ,' pontos')
+    if pontos_j_b > pontos_j_p:
+        return True
+    else:
+        return False 
+   
+
+
+
