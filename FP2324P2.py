@@ -679,12 +679,29 @@ def eh_jogada_legal(g, i, p, l):
         ):
          raise ValueError('eh_jogada_legal: argumento invalido')
     print(goban_para_str(l))
-    goban_dep_jogada = coloca_pedra(cria_copia_goban(g), i, p)
-    
-
+    goban_dep_jogada = coloca_pedra(cria_copia_goban(g), i, p) 
+    print(goban_para_str(goban_dep_jogada))
     if not gobans_iguais(goban_dep_jogada, l):
+
         tipo_pedra = obtem_pedra(goban_dep_jogada, i)
-        cadeia = obtem_cadeia(goban_dep_jogada, i)
+        cadeia= obtem_cadeia(goban_dep_jogada, i)
+        adjacentes_jogada = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(goban_dep_jogada))
+
+        caixa_pedras_j = set()
+        caixa_pedras_2_j = ()
+
+        if all(set([tipo_pedra]) == i for i in adjacentes_jogada):
+            for elemento in adjacentes_jogada:
+                caixa_pedras_2_j = ()
+                if obtem_pedra(goban_dep_jogada, elemento) != obtem_pedra(goban_dep_jogada, i):
+                    for tuplos in obtem_intersecoes_adjacentes(elemento, obtem_ultima_intersecao(goban_dep_jogada)):
+                        caixa_pedras_j.add(obtem_pedra(goban_dep_jogada, tuplos))
+                        caixa_pedras_2_j += (caixa_pedras_j,)
+                        caixa_pedras_j = set()
+                    if all(set([tipo_pedra]) == i for i in caixa_pedras_2_j):
+                        goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
+                        return True    
+
         if not isinstance(cadeia[0], tuple):
             cadeia = (cadeia,)
         adjacentes = obtem_adjacentes_diferentes(goban_dep_jogada, cadeia)
@@ -702,7 +719,7 @@ def eh_jogada_legal(g, i, p, l):
             goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
             return True
     else:
-        return True 
+        return True   
 
 def cria_copia_goban(g):
     import copy
