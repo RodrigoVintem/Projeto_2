@@ -524,6 +524,9 @@ def obtem_adjacentes_diferentes(g, t):
         if not all(isinstance(coord, tuple) and len(coord) == 2 for coord in t):
             raise ValueError('obtem_adjacentes_diferentes: argumento invalido')
 
+    if not isinstance(t[0], tuple): 
+        t = (t,)
+    
     def obtem_intersecoes_adjacentes(i, l):
         max_col = l[0]
         max_lin = l[1]
@@ -678,48 +681,66 @@ def eh_jogada_legal(g, i, p, l):
         p not in [0, 1]
         ):
          raise ValueError('eh_jogada_legal: argumento invalido')
-    print(goban_para_str(l))
-    goban_dep_jogada = coloca_pedra(cria_copia_goban(g), i, p) 
-    print(goban_para_str(goban_dep_jogada))
-    if not gobans_iguais(goban_dep_jogada, l):
+  
+    if obtem_pedra(g, i) != 2:
+        return False
+    else:
+        goban_dep_jogada = coloca_pedra(cria_copia_goban(g), i, p) 
 
-        tipo_pedra = obtem_pedra(goban_dep_jogada, i)
-        cadeia= obtem_cadeia(goban_dep_jogada, i)
-        adjacentes_jogada = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(goban_dep_jogada))
 
-        caixa_pedras_j = set()
-        caixa_pedras_2_j = ()
-
-        if all(set([tipo_pedra]) == i for i in adjacentes_jogada):
-            for elemento in adjacentes_jogada:
-                caixa_pedras_2_j = ()
-                if obtem_pedra(goban_dep_jogada, elemento) != obtem_pedra(goban_dep_jogada, i):
-                    for tuplos in obtem_intersecoes_adjacentes(elemento, obtem_ultima_intersecao(goban_dep_jogada)):
-                        caixa_pedras_j.add(obtem_pedra(goban_dep_jogada, tuplos))
-                        caixa_pedras_2_j += (caixa_pedras_j,)
-                        caixa_pedras_j = set()
-                    if all(set([tipo_pedra]) == i for i in caixa_pedras_2_j):
-                        goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
-                        return True    
-
-        if not isinstance(cadeia[0], tuple):
-            cadeia = (cadeia,)
-        adjacentes = obtem_adjacentes_diferentes(goban_dep_jogada, cadeia)
-        caixa_pedras = set()
+    def come(g, i):
+        caixa_pedras= set()
         caixa_pedras_2 = ()
 
-        for tuplos in adjacentes:
-            caixa_pedras.add(obtem_pedra(goban_dep_jogada, tuplos))
-            caixa_pedras_2 += (caixa_pedras,)
-            caixa_pedras = set()
-        if all(set([tipo_pedra]) == i for i in caixa_pedras_2):
-            goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
-            return False    
+        adj = obtem_intersecoes_adjacentes(i, obtem_ultima_intersecao(g))
+        for tuplos in adj:
+            caixa_pedras_2 = ()
+            if obtem_pedra(g, tuplos) != 2:
+                adj_tuplos = obtem_intersecoes_adjacentes(tuplos, obtem_ultima_intersecao(g))
+                cadeia = obtem_cadeia(g, tuplos)
+                if not isinstance(cadeia[0], tuple):
+                    cadeia = (cadeia,)
+                if len(cadeia) == 1:
+                    for tuplos_2 in adj_tuplos:
+                        caixa_pedras.add(obtem_pedra(g, tuplos_2))
+                        caixa_pedras_2 += (caixa_pedras,)
+                        caixa_pedras = set()
+                        #Ver se todos os elementos em caixa_pedras_2 são diferentes do tipo de pedra de tuplos
+                    if all(set([obtem_pedra(g, tuplos)]) != i for i in caixa_pedras_2) and all(set([2]) != i for i in caixa_pedras_2):
+                        g = remove_pedra(g, tuplos)
+                        return True
+                else:
+                    adj_dif = obtem_adjacentes_diferentes(g, cadeia)
+                    for tuplos_2 in adj_dif:
+                        caixa_pedras.add(obtem_pedra(g, tuplos_2))
+                        caixa_pedras_2 += (caixa_pedras,)
+                        caixa_pedras = set()
+                        #Ver se todos os elementos em caixa_pedras_2 são diferentes do tipo de pedra de tuplos
+                    if all(set([obtem_pedra(g, tuplos)]) != i for i in caixa_pedras_2) and all(set([2]) != i for i in caixa_pedras_2):
+                        g = remove_pedra(g, tuplos)
+                        return True 
+                
+    def suicidio(g, i):
+        cadeia = obtem_cadeia(goban_dep_jogada, i)
+        adj_dif = obtem_adjacentes_diferentes(goban_dep_jogada, cadeia)
+        if adj_dif == ():
+            return True           
+
+    if not gobans_iguais(goban_dep_jogada, l):
+        cadeia = obtem_cadeia(goban_dep_jogada, i)
+        adj_dif = obtem_adjacentes_diferentes(goban_dep_jogada, cadeia)
+        
+        if not isinstance(cadeia[0], tuple):
+            cadeia = (cadeia,)
+
+        if adj_dif == () and len(cadeia) > 1:
+            if suicidio(goban_dep_jogada, i):
+                return False
         else:
-            goban_dep_jogada = remove_pedra(goban_dep_jogada, i)
-            return True
-    else:
-        return True   
+            if come(goban_dep_jogada, i):
+                return True
+            elif suicidio(goban_dep_jogada, i):
+                return False   
 
 def cria_copia_goban(g):
     import copy
