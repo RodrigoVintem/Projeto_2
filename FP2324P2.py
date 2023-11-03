@@ -1,17 +1,20 @@
 # This is the Python script for your project
 
 def cria_intersecao(col, lin):
-    col = col.strip()
-
     if (
-        not isinstance(col, str) or 
-        not isinstance(lin, int) or 
-        not col.isupper() or 
-        col not in 'ABCDEFGHIJKLMNOPGRS' or
-        lin not in range(1, 20)
-        ):
+        col is None or
+        lin is None or
+        isinstance(col, bool) or
+        isinstance(lin, bool) or
+        not isinstance(col, str) or
+        not isinstance(lin, int) or
+        not col.strip().isalpha() or 
+        not col.strip().isupper() or
+        lin not in range(1, 20) or 
+        len(col) != 1 
+    ):
         raise ValueError('cria_intersecao: argumentos invalidos')
-    return(col,lin)
+    return (col, lin)
 
 def obtem_col(i):
     return(str(i[0]))
@@ -79,10 +82,11 @@ def ordena_intersecoes(t):
                 result.append(item)
         return result
 
-    if isinstance(t, set):
+    if t == () or t == []:
+        return tuple(t)
+    elif isinstance(t, set):
         t = tuple(t)
-
-    if len(t) == 1:
+    elif len(t) == 1:
         t = t[0]
 
     for x in t:
@@ -145,7 +149,7 @@ def eh_pedra_jogador(p):
 
 def cria_goban_vazio(n):
     #Cria uma lista de listas de tamanho n x n com o caracter '.'9 ou 13 ou 19 vezes dentro de cada lista
-    if n == 9 or n == 13 or n == 19:
+    if isinstance(n, int) and n == 9 or n == 13 or n == 19:
         goban = []
         for i in range(n):
             goban.append([2] * n)
@@ -154,7 +158,10 @@ def cria_goban_vazio(n):
         raise ValueError("cria_goban_vazio: argumento invalido")    
 
 def cria_goban(n, ib, ip):
-    if n == 9 or n == 13 or n == 19:
+    if not isinstance(ib, tuple) or not isinstance(ip, tuple) or ib == ip:
+        raise ValueError('cria_goban: argumentos invalidos')
+    
+    if isinstance(n, int) and n == 9 or n == 13 or n == 19:
         def cria_goban_9(n, ib, ip):
             goban = cria_goban_vazio(n)
             if ib == () and isinstance(ip[0],tuple):
@@ -195,7 +202,7 @@ def cria_goban(n, ib, ip):
         else:
             return cria_goban_13_19(n, ib, ip)
     else:   
-        raise ValueError('cria_goban: argumento invalido')
+        raise ValueError('cria_goban: argumentos invalidos')
 
 def cria_copia_goban(t):
     copia_goban = t
@@ -857,6 +864,4 @@ def go(n, tb, tn):
         return True
     else:
         return False
-
-
 
