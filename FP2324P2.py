@@ -150,7 +150,7 @@ def eh_pedra_jogador(p):
 
 def cria_goban_vazio(n):
     #Cria uma lista de listas de tamanho n x n com o caracter '.'9 ou 13 ou 19 vezes dentro de cada lista
-    if isinstance(n, int) and n == 9 or n == 13 or n == 19:
+    if isinstance(n, int) and n in (9, 13, 19) and not isinstance(n, float):
         goban = []
         for i in range(int(n)):
             goban.append([2] * int(n))
@@ -159,16 +159,63 @@ def cria_goban_vazio(n):
         raise ValueError("cria_goban_vazio: argumento invalido")    
 
 def cria_goban(n, ib, ip):
+    if not(isinstance(n, int) and n == 9 or n == 13 or n == 19):
+        raise ValueError('cria_goban: argumentos invalidos')
+
     duplicados = set() # Verifica se há interseções duplicadas
+    goban = cria_goban_vazio(n)
 
     if not isinstance(ib, tuple) or not isinstance(ip, tuple) or ib == ip:
         raise ValueError('cria_goban: argumentos invalidos')
     
     if not ip and not ib:
         raise ValueError('cria_goban: argumentos invalidos')
-    elif n == 9:
-        if len(ib) == 1 and ib[0][1] > 9 or len(ip) == 1 and ip[0][1] > 9:
+
+    if n == 9:
+        if len(ib) == 2 and not isinstance(ib[0], tuple):
+            ib = (ib,)
+        if len(ip) == 2 and not isinstance(ip[0], tuple):
+            ip = (ip,)    
+        if len(ib) == 1 and not((0 <= (n-1) - (ib[0][1] - 1) < n) and (0 <= ord(ib[0][0]) - 65 < n)):
+            # Verifique os limites para ib[0]
             raise ValueError('cria_goban: argumentos invalidos')
+        elif len(ip) == 1 and not((0 <= (n-1) - (ip[0][1] - 1) < n) and (0 <= ord(ip[0][0]) - 65 < n)):
+            # Verifique os limites para ip[0]
+            raise ValueError('cria_goban: argumentos invalidos')
+        elif len(ib) > 1 and isinstance(ib[0], tuple):
+            # Verifique os limites para cada coordenada em ib
+            for i in range(len(ib)):
+                if not ( (0 <= (n-1) - (ib[i][1] - 1) < n) and (0 <= ord(ib[i][0]) - 65 < n) ):
+                    raise ValueError('cria_goban: argumentos invalidos')
+        elif len(ip) > 1 and isinstance(ip[0], tuple):
+            # Verifique os limites para cada coordenada em ip
+            for i in range(len(ip)):
+                if not((0 <= (n-1) - (ip[i][1] - 1) < n) and (0 <= ord(ip[i][0]) - 65 < n)):
+                    raise ValueError('cria_goban: argumentos invalidos')
+                    
+    elif n == 13 or n == 19:
+        if len(ib) == 1 and (0 <= (n-1) - (ib[0][1] - 1) < n) and (0 <= ord(ib[0][0]) - 65 < n):
+            # Verifique os limites para ib[0]
+            goban[(n-1) - (ib[0][1] - 1)][ord(ib[0][0]) - 65] = 0
+        elif len(ip) == 1 and (0 <= (n-1) - (ip[0][1] - 1) < n) and (0 <= ord(ip[0][0]) - 65 < n):
+            # Verifique os limites para ip[0]
+            goban[(n-1) - (ip[0][1] - 1)][ord(ip[0][0]) - 65] = 1
+        elif len(ib) > 1 and isinstance(ib[0], tuple):
+            # Verifique os limites para cada coordenada em ib
+            for i in range(len(ib)):
+                if (0 <= (n-1) - (ib[i][1] - 1) < n) and (0 <= ord(ib[i][0]) - 65 < n):
+                    goban[(n-1) - (ib[i][1] - 1)][ord(ib[i][0]) - 65] = 0
+                else:
+                    raise ValueError('cria_goban: argumentos invalidos')
+        elif len(ip) > 1 and isinstance(ip[0], tuple):
+            # Verifique os limites para cada coordenada em ip
+            for i in range(len(ip)):
+                if (0 <= (n-1) - (ip[i][1] - 1) < n) and (0 <= ord(ip[i][0]) - 65 < n):
+                    goban[(n-1) - (ip[i][1] - 1)][ord(ip[i][0]) - 65] = 1
+                else:
+                    raise ValueError('cria_goban: argumentos invalidos')
+
+
 
     
     if isinstance(n, int) and n == 9 or n == 13 or n == 19:
@@ -915,3 +962,7 @@ def go(n, tb, tn):
         return True
     else:
         return False
+    
+
+
+
