@@ -72,18 +72,33 @@ def obtem_intersecoes_adjacentes(i, l):
     max_col = l[0]
     max_lin = l[1]
     resultado = ()
-    #Vê se há interseções adjacentes em baixo
-    if i[1] > 1:
-        resultado += ((i[0], i[1]-1),)
-    #Vê se há interseções adjacentes à esquerda
-    if i[0] != 'A':
-        resultado += ((chr(ord(i[0])-1), i[1]),) 
-    #Vê se há interseções adjacentes à direita
-    if i[0] != max_col:
-        resultado += ((chr(ord(i[0])+1), i[1]),)
-     #Vê se há interseções adjacentes em cima
-    if i[1] < max_lin: 
-        resultado += ((i[0], i[1]+1),)  
+    if eh_intersecao(i):
+        #Vê se há interseções adjacentes em baixo
+        if i[1] > 1:
+            resultado += ((i[0], i[1]-1),)
+        #Vê se há interseções adjacentes à esquerda
+        if i[0] != 'A':
+            resultado += ((chr(ord(i[0])-1), i[1]),) 
+        #Vê se há interseções adjacentes à direita
+        if i[0] != max_col:
+            resultado += ((chr(ord(i[0])+1), i[1]),)
+         #Vê se há interseções adjacentes em cima
+        if i[1] < max_lin: 
+            resultado += ((i[0], i[1]+1),)  
+    elif isinstance(i[0], tuple):
+        for x in i:
+            #Vê se há interseções adjacentes em baixo
+            if x[1] > 1:
+                resultado += ((x[0], x[1]-1),)
+            #Vê se há interseções adjacentes à esquerda
+            if x[0] != 'A':
+                resultado += ((chr(ord(x[0])-1), x[1]),) 
+            #Vê se há interseções adjacentes à direita
+            if x[0] != max_col:
+                resultado += ((chr(ord(x[0])+1), x[1]),)
+            #Vê se há interseções adjacentes em cima
+            if x[1] < max_lin: 
+                resultado += ((x[0], x[1]+1),)        
          
     return resultado   
 
@@ -159,17 +174,33 @@ def cria_goban_vazio(n):
         raise ValueError("cria_goban_vazio: argumento invalido")    
 
 def cria_goban(n, ib, ip):
-    if not(isinstance(n, int) and n == 9 or n == 13 or n == 19):
+    if not(isinstance(n, int) and n in (9, 13, 19) and not isinstance(n, float)):
         raise ValueError('cria_goban: argumentos invalidos')
 
     duplicados = set() # Verifica se há interseções duplicadas
-    goban = cria_goban_vazio(n)
+
+    try:
+        goban = cria_goban_vazio(n)
+    except ValueError:
+        raise ValueError('cria_goban: argumentos invalidos')
 
     if not isinstance(ib, tuple) or not isinstance(ip, tuple) or ib == ip:
         raise ValueError('cria_goban: argumentos invalidos')
     
     if not ip and not ib:
         raise ValueError('cria_goban: argumentos invalidos')
+    
+    if len(ib) != 0 and isinstance(ib[0], tuple):
+        for x in ib:
+                if not eh_intersecao(x):
+                    raise ValueError('cria_goban: argumentos invalidos')
+    if len(ip) != 0 and isinstance(ip[0], tuple):
+        for x in ip:
+            try:
+                eh_intersecao(x)
+            except ValueError:
+                raise ValueError('cria_goban: argumentos invalidos')
+    
 
     if n == 9:
         if len(ib) == 2 and not isinstance(ib[0], tuple):
@@ -194,25 +225,25 @@ def cria_goban(n, ib, ip):
                     raise ValueError('cria_goban: argumentos invalidos')
                     
     elif n == 13 or n == 19:
-        if len(ib) == 1 and (0 <= (n-1) - (ib[0][1] - 1) < n) and (0 <= ord(ib[0][0]) - 65 < n):
+        if len(ib) == 2 and not isinstance(ib[0], tuple):
+            ib = (ib,)
+        if len(ip) == 2 and not isinstance(ip[0], tuple):
+            ip = (ip,)
+        if len(ib) == 1 and not((0 <= (n-1) - (ib[0][1] - 1) < n) and (0 <= ord(ib[0][0]) - 65 < n)):
             # Verifique os limites para ib[0]
-            goban[(n-1) - (ib[0][1] - 1)][ord(ib[0][0]) - 65] = 0
-        elif len(ip) == 1 and (0 <= (n-1) - (ip[0][1] - 1) < n) and (0 <= ord(ip[0][0]) - 65 < n):
+            raise ValueError('cria_goban: argumentos invalidos')
+        elif len(ip) == 1 and not((0 <= (n-1) - (ip[0][1] - 1) < n) and (0 <= ord(ip[0][0]) - 65 < n)):
             # Verifique os limites para ip[0]
-            goban[(n-1) - (ip[0][1] - 1)][ord(ip[0][0]) - 65] = 1
+            raise ValueError('cria_goban: argumentos invalidos')
         elif len(ib) > 1 and isinstance(ib[0], tuple):
             # Verifique os limites para cada coordenada em ib
             for i in range(len(ib)):
-                if (0 <= (n-1) - (ib[i][1] - 1) < n) and (0 <= ord(ib[i][0]) - 65 < n):
-                    goban[(n-1) - (ib[i][1] - 1)][ord(ib[i][0]) - 65] = 0
-                else:
+                if not((0 <= (n-1) - (ib[i][1] - 1) < n) and (0 <= ord(ib[i][0]) - 65 < n)):
                     raise ValueError('cria_goban: argumentos invalidos')
         elif len(ip) > 1 and isinstance(ip[0], tuple):
             # Verifique os limites para cada coordenada em ip
             for i in range(len(ip)):
-                if (0 <= (n-1) - (ip[i][1] - 1) < n) and (0 <= ord(ip[i][0]) - 65 < n):
-                    goban[(n-1) - (ip[i][1] - 1)][ord(ip[i][0]) - 65] = 1
-                else:
+                if not((0 <= (n-1) - (ip[i][1] - 1) < n) and (0 <= ord(ip[i][0]) - 65 < n)):
                     raise ValueError('cria_goban: argumentos invalidos')
 
 
@@ -622,6 +653,7 @@ def obtem_territorios(g):
             pedras_adj.append(obtem_pedra(g, x))
         if all(pedra == obtem_pedra(g, x) for pedra in pedras_adj):
             territorios.append(intersecoes)
+            pedras_adj = []
         else:
             pedras_adj = []
                 
@@ -757,6 +789,7 @@ def obtem_pedras_jogadores(g):
 
 def calcula_pontos(g):
 
+    tamanho_territorio = 0
     pontos_j_b = obtem_pedras_jogadores(g)[0]
     pontos_j_p = obtem_pedras_jogadores(g)[1]
 
@@ -776,17 +809,46 @@ def calcula_pontos(g):
             return (361, pontos_j_p)
     
     territorios = obtem_territorios(g)
-    territorio_pertence = territorio_de_quem(g, territorios)
-    
-    tamanho_territorio = len(territorios[0])
-    if territorio_pertence == 0:
-        pontos_j_b += tamanho_territorio
-    elif territorio_pertence == 1:  
-        pontos_j_p += tamanho_territorio    
+
+    if len(territorios) != 0:
+        for x in territorios[0]:
+            if not isinstance(x[0], tuple):
+                x = (x,)    
+            i = 0
+            territorio_pertence = territorio_de_quem(g, x)
+
+            
+            if not isinstance(territorios[0], tuple):
+                tamanho_territorio = len(territorios[0])
+            else:
+                while i < len(territorios[0]):
+                    if not isinstance(territorios[0], tuple):
+                        tamanho_territorio += len(x)
+                        i += 1
+                        break
+                    else:
+                        tamanho_territorio += len(x) 
+                        i += 1 
+                        break 
+
+
+            if territorio_pertence == 0:
+                pontos_j_b += tamanho_territorio
+                tamanho_territorio = 0
+            elif territorio_pertence == 1:  
+                pontos_j_p += tamanho_territorio 
+                tamanho_territorio = 0 
+    else:
+        return (pontos_j_b, pontos_j_p)
+      
+
+
     return (pontos_j_b, pontos_j_p) 
 
 def territorio_de_quem(g, territorio):
     #Descobre a quem pertence o território
+    if not isinstance(territorio[0][0], tuple):
+        territorio = (territorio,)
     for territorios in territorio:
         for intersecao in territorios:
             adjacentes = obtem_intersecoes_adjacentes(intersecao, obtem_ultima_intersecao(g))
@@ -963,6 +1025,18 @@ def go(n, tb, tn):
     else:
         return False
     
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
