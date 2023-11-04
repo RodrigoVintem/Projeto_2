@@ -1,5 +1,5 @@
 # This is the Python script for your project
-
+#Estou a prepara este
 def cria_intersecao(col, lin):
     if (
         col is None or
@@ -47,12 +47,21 @@ def intersecoes_iguais(i1, i2):
     return False
 
 def intersecao_para_str(i):
-    resultado = set()
-    for x in i:
-        if not isinstance(x, str) and not isinstance(x, int):
-            resultado.add((x[0] + str(x[1])),) 
-        else:
-            return (i[0] + str(i[1]))  
+    
+    if len(i) != 1 and isinstance(i[0], tuple):
+        resultado = ''
+        for x in i:
+            x = (x[0] + str(x[1]))
+            if resultado == '':
+                resultado = resultado + x
+            else:
+                resultado = resultado + ' ' + x
+        return resultado
+    else:
+        if isinstance(i[0], tuple):
+            i = i[0]
+            return (i[0] + str(i[1]))
+        return (i[0] + str(i[1]))  
 
 def str_para_intersecao(s):
     col = s[0]
@@ -87,22 +96,7 @@ def remove_duplicados(t):
         return tuple(result)
 
 def ordena_intersecoes(t):
-
-    if t == () or t == []:
-        return tuple(t)
-    elif isinstance(t, set):
-        t = tuple(t)
-    elif len(t) == 1:
-        t = t[0]
-
-    for x in t:
-        if not isinstance(x, tuple):
-            return t 
-
-
-    tup_ordenado = sorted(t, key = lambda x: (x[1], x[0]))
-
-    return tuple(tup_ordenado)   
+    return tuple(sorted(t, key=lambda x: (x[1], x[0])))   
 
 def cria_pedra_branca():
     return 0
@@ -153,12 +147,13 @@ def eh_pedra_jogador(p):
     else:
         return False
 
+
 def cria_goban_vazio(n):
     #Cria uma lista de listas de tamanho n x n com o caracter '.'9 ou 13 ou 19 vezes dentro de cada lista
     if isinstance(n, int) and n == 9 or n == 13 or n == 19:
         goban = []
-        for i in range(n):
-            goban.append([2] * n)
+        for i in range(int(n)):
+            goban.append([2] * int(n))
         return goban 
     else:
         raise ValueError("cria_goban_vazio: argumento invalido")    
@@ -550,8 +545,7 @@ def busca_territorio(i, j, terr, g):
             for ni, nj in vizinhas(i, j):
                 busca_territorio(ni, nj, terr, g)
 
-def obtem_territorios(g):
-    def obtem_territorios_vazios(g):
+def obtem_territorios_vazios(g):
         
         territorios = []
         for i in range(len(g)):
@@ -570,70 +564,36 @@ def obtem_territorios(g):
 
         return tuple(sorted(territorios, key=lambda terr: (terr[0][1], terr[0][0])))
 
-    def obtem_intersecoes_adjacentes(i, l):
-        max_col = l[0]
-        max_lin = l[1]
-        resultado = ()
-        #Vê se há interseções adjacentes em baixo
-        if i[1] > 1:
-            resultado += ((i[0], i[1]-1),)
-        #Vê se há interseções adjacentes à esquerda
-        if i[0] != 'A':
-            resultado += ((chr(ord(i[0])-1), i[1]),) 
-        #Vê se há interseções adjacentes à direita
-        if i[0] != max_col:
-            resultado += ((chr(ord(i[0])+1), i[1]),)
-         #Vê se há interseções adjacentes em cima
-        if i[1] < max_lin: 
-            resultado += ((i[0], i[1]+1),)  
 
-        return resultado   
-
-
+def obtem_territorios(g):
+    pedras_adj = []
     possiveis_territorios = obtem_territorios_vazios(g)
-    dimensoes = obtem_ultima_intersecao(g)
-    caixa_1 = set()
-    caixa_2 = ()
-    caixa_pedras= set()
-    caixa_pedras_2 = ()
-    caixa_final = ()
-    ii = -1
-    i=0
+    territorios = []
+    for intersecoes in possiveis_territorios:
+        adj_dif = obtem_adjacentes_diferentes(g, intersecoes)
+        for x in adj_dif:
+            pedras_adj.append(obtem_pedra(g, x))
+        if all(pedra == obtem_pedra(g, x) for pedra in pedras_adj):
+            territorios.append(intersecoes)
+        else:
+            pedras_adj = []
+                
 
-    for territorios in possiveis_territorios:
-        i += 1
-        for intersecao in territorios:
-            cadeia = obtem_cadeia(g, intersecao)
-            adj_dif = obtem_adjacentes_diferentes(g, cadeia)
-            if adj_dif != () and not isinstance(adj_dif[0], tuple):
-                adj_dif = (adj_dif,)
-            for tuplos in adj_dif:
-                caixa_pedras.add(obtem_pedra(g, tuplos))
-                caixa_pedras_2 += (caixa_pedras,)
-                caixa_pedras = set()
-                #Ver se todos os elementos em caixa_pedras_2 são diferentes do tipo de pedra de tuplos
-            if all(isinstance(t, set) and len(t) == 1 and 0 in t for t in caixa_pedras_2) or all(isinstance(t, set) and len(t) == 1 and 1 in t for t in caixa_pedras_2):    
-                if all(set([obtem_pedra(g, intersecao)]) != i for i in caixa_pedras_2) and all(set([2]) != i for i in caixa_pedras_2):
-                    caixa_1.add(territorios)                  
-                    caixa_pedras_2 = ()                   
-                    caixa_2 += (caixa_1,)
-            caixa_1 = set()
-            break
+    def ordena_territorios(t):
 
-    resultado = tuple(caixa_2) 
+        if not isinstance(t, tuple):
+            t = tuple(t)
 
-    def ordenar_tuplos(tuplos):
-        tuplos_ordenados = []
-        for tuplo in tuplos:
-            tuplo_ordenado = sorted(tuplo, key=lambda x: (x[0], x[1]))
-            tuplos_ordenados.append(tuple(tuplo_ordenado))
-        if len(tuplos_ordenados) == 1:
-            tuplos_ordenados = ordena_intersecoes(tuplos_ordenados)
-            tuplos_ordenados = (tuplos_ordenados,)
-        return tuple(tuplos_ordenados)
-      
+        tup_ordenado = [tuple(sorted(territorio, key=lambda x: (x[1], x[0]))) for territorio in territorios]  
+        tup_ordenado = tuple(tup_ordenado)
+        if len(tup_ordenado) > 1:
+            tup_ordenado = (tup_ordenado,)
 
-    return ordenar_tuplos(resultado)
+        return tup_ordenado
+             
+    territorios = ordena_territorios(territorios)
+
+    return tuple(territorios)       
 
 def obtem_adjacentes_diferentes(g, t):
     # Verifica se os argumentos são válidos
@@ -955,5 +915,3 @@ def go(n, tb, tn):
         return True
     else:
         return False
-
-
