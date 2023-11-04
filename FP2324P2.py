@@ -174,10 +174,30 @@ def cria_goban_vazio(n):
         raise ValueError("cria_goban_vazio: argumento invalido")    
 
 def cria_goban(n, ib, ip):
+
+    duplicados = set() # Verifica se há interseções duplicadas
+    novo_ib = []
+    novo_ip = []
+    try: 
+        if isinstance(ib[0], str) and not isinstance(ib[1], int):
+            for x in ib:
+                novo_ib.append(str_para_intersecao(x))
+            novo_ib = tuple(novo_ib)
+            ib = novo_ib    
+    except IndexError:
+        ib = ib
+    try:
+        if isinstance(ip[0], str) and not isinstance(ip[1], int):
+            for x in ip:
+                novo_ip.append(str_para_intersecao(x))   
+            novo_ip = tuple(novo_ip)
+            ip = novo_ip 
+    except IndexError:
+        ip = ip  
+
     if not(isinstance(n, int) and n in (9, 13, 19) and not isinstance(n, float)):
         raise ValueError('cria_goban: argumentos invalidos')
 
-    duplicados = set() # Verifica se há interseções duplicadas
 
     try:
         goban = cria_goban_vazio(n)
@@ -727,8 +747,10 @@ def obtem_adjacentes_diferentes(g, t):
                     resultado.add(intersecao)
 
     return remove_duplicados(ordena_intersecoes(resultado)) 
+    
 
 def jogada(g, i, p):
+
     def come(g, i):
         caixa_pedras= set()
         caixa_pedras_2 = ()
@@ -766,6 +788,8 @@ def jogada(g, i, p):
 
     if eh_intersecao_valida(g, i) and p in [0, 1]:
         g = coloca_pedra(g, i, p)
+
+
         if come(g, i):
             return g
         else:
@@ -860,6 +884,7 @@ def territorio_de_quem(g, territorio):
  
 def eh_jogada_legal(g, i, p, l):
     if  (
+        not eh_intersecao_valida(g, i) or
         not isinstance(g, list) or
         not isinstance(i, tuple) or
         not isinstance(p, int) or
@@ -867,8 +892,10 @@ def eh_jogada_legal(g, i, p, l):
         len(g) == 0 or len(i) != 2 or
         p not in [0, 1]
         ):
-         raise ValueError('eh_jogada_legal: argumento invalido')
+         return False
   
+    copia = cria_copia_goban(g)
+
     if obtem_pedra(g, i) != 2:
         return False
     else:
@@ -914,7 +941,8 @@ def eh_jogada_legal(g, i, p, l):
         cadeia = obtem_cadeia(goban_dep_jogada, i)
         adj_dif = obtem_adjacentes_diferentes(goban_dep_jogada, cadeia)
         if adj_dif == ():
-            return True           
+            return True  
+
 
     if not gobans_iguais(goban_dep_jogada, l):
         cadeia = obtem_cadeia(goban_dep_jogada, i)
@@ -1025,18 +1053,3 @@ def go(n, tb, tn):
     else:
         return False
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
